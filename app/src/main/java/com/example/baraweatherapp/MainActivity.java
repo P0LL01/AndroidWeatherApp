@@ -25,7 +25,7 @@ import android.os.Message;
 
 public class MainActivity extends AppCompatActivity  implements View.OnClickListener, SensorEventListener {
     // UI variables
-    private TextView cityNameText, temperatureText, humidityText, windText;
+    private TextView cityNameText, temperatureText, humidityText, windText, currentLocationText;
     private ImageView weatherImage;
     private Button refreshButton;
     private EditText cityNameInput;
@@ -82,6 +82,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         windText = findViewById(R.id.windText);
         weatherImage = findViewById(R.id.weatherImage);
         cityNameInput = findViewById(R.id.cityNameInput);
+        currentLocationText= findViewById(R.id.currentLocationText);
         refreshButton = findViewById(R.id.searchWeatherButton);
 
 
