@@ -41,8 +41,4 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
-    // this fetches the data from the web
-    // implementation() tells the build system to download this library and include it in this app
-    // OkHttp library: Is used to fetch the weather API data from the web
-    implementation("com.squareup.okhttp3:okhttp4:4.9.3")
 }

@@ -20,7 +20,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public abstract class MainActivity extends AppCompatActivity implements View.OnClickListener, SensorEventListener {
+import android.os.Handler;
+import android.os.Message;
+
+public class MainActivity extends AppCompatActivity  implements View.OnClickListener, SensorEventListener {
     // UI variables
     private TextView cityNameText, temperatureText, humidityText, windText;
     private ImageView weatherImage;
@@ -37,7 +40,30 @@ public abstract class MainActivity extends AppCompatActivity implements View.OnC
     private float lastAcceleration;
 
 
+    private Handler weatherHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
 
+            if (msg.what == 1) {
+                Bundle bundle = msg.getData();
+
+                double temperature = bundle.getDouble("temperature");
+                int humidity = bundle.getInt("humidity");
+                double windSpeed = bundle.getDouble("windSpeed");
+                String cityName = bundle.getString("cityName");
+
+                cityNameText.setText(cityName);
+                temperatureText.setText(temperature + "°C");
+                humidityText.setText(humidity + "%");
+                windText.setText(windSpeed + " km/h");
+
+            } else {
+                Toast.makeText(MainActivity.this, "Weather error", Toast.LENGTH_SHORT).show();
+            }
+
+            return true;
+        }
+    });
 
 
     // function for when the user opens the app for the first time
@@ -114,7 +140,8 @@ public abstract class MainActivity extends AppCompatActivity implements View.OnC
             // checks if the user input is empty or not
             if(!cityToSearch.isEmpty()) {
                 // API CALLING
-                System.out.println("searching for city " + cityToSearch);
+                WeatherThread thread = new WeatherThread(cityToSearch, weatherHandler);
+                thread.start();
             }
         }
     }
