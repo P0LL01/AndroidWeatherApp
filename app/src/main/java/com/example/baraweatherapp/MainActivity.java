@@ -20,41 +20,41 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
+import android.location.LocationListener;
+
+import androidx.core.app.ActivityCompat;
+
 import android.os.Handler;
 import android.os.Message;
 
-/**
- * Κύρια οθόνη της εφαρμογής.
- * Εμφανίζει τα δεδομένα καιρού, δέχεται είσοδο πόλης από τον χρήστη
- * και χρησιμοποιεί τον αισθητήρα επιτάχυνσης για λειτουργία shake-to-refresh.
- */
 public class MainActivity extends AppCompatActivity  implements View.OnClickListener, SensorEventListener {
-    // Στοιχεία του γραφικού περιβάλλοντος που εμφανίζουν τα δεδομένα καιρού
+    // UI variables
     private TextView cityNameText, temperatureText, humidityText, windText;
     private ImageView weatherImage;
-    private Button refreshButton;
+    private Button refreshButton, currentLocationButton;
     private EditText cityNameInput;
 
-    // Μεταβλητές για χρήση του αισθητήρα επιτάχυνσης
+    // shake variables for SensorEventListener
     private SensorManager SM;
     private Sensor Acc;
 
-    // Μεταβλητές που χρησιμοποιούνται για τον υπολογισμό έντονης κίνησης της συσκευής
+    // movement variables
     private float acceleration;
     private float currentAcceleration;
     private float lastAcceleration;
 
-    /**
-     * Handler που λαμβάνει τα αποτελέσματα από το WeatherThread.
-     * Επειδή το WeatherThread τρέχει σε background thread, δεν μπορεί να ενημερώσει
-     * απευθείας το UI. Για αυτό στέλνει Message σε αυτόν τον Handler.
-     */
+    private LocationManager locationManager;
+
+
     private Handler weatherHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
 
             if (msg.what == 1) {
-                // Αν το μήνυμα είναι επιτυχές, παίρνουμε τα δεδομένα καιρού από το Bundle
                 Bundle bundle = msg.getData();
 
                 double temperature = bundle.getDouble("temperature");
@@ -62,14 +62,12 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                 double windSpeed = bundle.getDouble("windSpeed");
                 String areaName = bundle.getString("areaName");
 
-                // Ενημέρωση των TextViews με τα νέα δεδομένα
                 cityNameText.setText(areaName);
                 temperatureText.setText(temperature + "°C");
                 humidityText.setText(humidity + "%");
                 windText.setText(windSpeed + " km/h");
 
             } else {
-                // Αν κάτι πάει λάθος στο WeatherThread, εμφανίζεται μήνυμα σφάλματος
                 Toast.makeText(MainActivity.this, "Weather error", Toast.LENGTH_SHORT).show();
             }
 
@@ -78,20 +76,16 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     });
 
 
-    /**
-     * Εκτελείται όταν δημιουργείται η Activity.
-     * Εδώ συνδέουμε το XML layout με την Java κλάση και αρχικοποιούμε
-     * τα στοιχεία του UI και τον αισθητήρα.
-     */
+    // function for when the user opens the app for the first time
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
 
-        // Σύνδεση της Activity με το αντίστοιχο XML layout
+        // connects with the xml file activity_main.xml
         setContentView(R.layout.activity_main);
 
-        // Σύνδεση των UI μεταβλητών με τα αντίστοιχα στοιχεία του XML
+        // enables the variable IDs from the XML file
         cityNameText = findViewById(R.id.layoutCityNameText);
         temperatureText = findViewById(R.id.layoutTemperature);
         humidityText = findViewById(R.id.humidityText);
@@ -99,122 +93,149 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         weatherImage = findViewById(R.id.weatherImage);
         cityNameInput = findViewById(R.id.cityNameInput);
         refreshButton = findViewById(R.id.searchWeatherButton);
+        currentLocationButton = findViewById(R.id.currentLocationButton);
 
 
 
-        // Ορισμός listener ώστε το κουμπί να καλεί την onClick()
+        // this button is used for the application to hear the clicks taht the user makes
+        // moves straight to the onClick() function
         refreshButton.setOnClickListener(this);
 
-        // Αρχικοποίηση του SensorManager και επιλογή του accelerometer
+        currentLocationButton.setOnClickListener(this);
+
+        // enabling the sensor and getting the values
         SM = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        // get acceleration values from the accelerometer sensor
         Acc = SM.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
-        // Αρχικές τιμές για τον υπολογισμό της επιτάχυνσης
+        // gravity values for the moving sensors
         acceleration = 0.00f;
         currentAcceleration = SensorManager.GRAVITY_EARTH;
         lastAcceleration = SensorManager.GRAVITY_EARTH;
 
-        // Προσαρμογή padding ώστε το περιεχόμενο να μη συγκρούεται με system bars
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
     }
 
-    /**
-     * Εκτελείται όταν η εφαρμογή μπαίνει σε κατάσταση pause.
-     * Σταματάμε τον sensor listener για εξοικονόμηση μπαταρίας.
-     */
+    // function for when the app is running on the background of the phone
     @Override
     protected void onPause(){
         super.onPause();
+        // unregisters the listener when the app is onPause() to consume less batery
         if (SM != null) {
             SM.unregisterListener(this);
         }
     }
 
-    /**
-     * Εκτελείται όταν η εφαρμογή επιστρέφει στο προσκήνιο.
-     * Ενεργοποιούμε ξανά τον accelerometer listener.
-     */
+    // function for when the user opens up the app again from the background
     @Override
     protected void onResume(){
          super.onResume();
         if (Acc != null) {
+            // sets the listener on onResume to listen for new data
+            // the sensor listens for the phones movement, later used in the current_location
             SM.registerListener(this, Acc, SensorManager.SENSOR_DELAY_NORMAL);
         }
     }
 
 
-    /**
-     * Διαχειρίζεται τα clicks των κουμπιών της Activity.
-     * Όταν ο χρήστης πατήσει το κουμπί αναζήτησης, ξεκινάει WeatherThread
-     * για να γίνει η λήψη των δεδομένων καιρού από το API.
-     */
+    // the onClick() function enables and controlls all the apps buttons.
     @Override
     public void onClick(View v){
         if (v == refreshButton){
 
-            // Παίρνουμε την πόλη που έγραψε ο χρήστης
+            // reads the users input in the citytoSearch bar
             String cityToSearch = cityNameInput.getText().toString();
 
-            // Αν το πεδίο δεν είναι άδειο, ξεκινάμε background thread για το API request
-            if (!cityToSearch.isEmpty()) {
+            // checks if the user input is empty or not
+            if(!cityToSearch.isEmpty()) {
+                if (!cityToSearch.isEmpty()) {
 
-                double latitude = 37.9838;
-                double longitude = 23.7275;
+                    double latitude = 37.9838;
+                    double longitude = 23.7275;
 
-                // Επιλογή συντεταγμένων ανάλογα με την πόλη
-                if (cityToSearch.equalsIgnoreCase("Athens")) {
-                    latitude = 37.9838;
-                    longitude = 23.7275;
+                    if (cityToSearch.equalsIgnoreCase("Athens")) {
+                        latitude = 37.9838;
+                        longitude = 23.7275;
+                    } else if (cityToSearch.equalsIgnoreCase("Thessaloniki")) {
+                        latitude = 40.6401;
+                        longitude = 22.9444;
+                    } else if (cityToSearch.equalsIgnoreCase("Patras")) {
+                        latitude = 38.2466;
+                        longitude = 21.7346;
+                    } else if (cityToSearch.equalsIgnoreCase("Heraklion")) {
+                        latitude = 35.3387;
+                        longitude = 25.1442;
+                    }
 
-                } else if (cityToSearch.equalsIgnoreCase("Thessaloniki")) {
-                    latitude = 40.6401;
-                    longitude = 22.9444;
+                    WeatherThread thread = new WeatherThread(
+                            cityToSearch,
+                            latitude,
+                            longitude,
+                            weatherHandler
+                    );
 
-                } else if (cityToSearch.equalsIgnoreCase("Patras")) {
-                    latitude = 38.2466;
-                    longitude = 21.7346;
-
-                } else if (cityToSearch.equalsIgnoreCase("Heraklion")) {
-                    latitude = 35.3387;
-                    longitude = 25.1442;
+                    thread.start();
                 }
+            }
+        } else if (v == currentLocationButton) {
 
-                WeatherThread thread = new WeatherThread(
-                        cityToSearch,
-                        latitude,
-                        longitude,
-                        weatherHandler
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        100
                 );
 
-                thread.start();
+                return;
             }
+
+            locationManager.requestSingleUpdate(
+                    LocationManager.GPS_PROVIDER,
+                    new LocationListener() {
+                        @Override
+                        public void onLocationChanged(Location location) {
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+
+                            WeatherThread thread = new WeatherThread(
+                                    "Current Location",
+                                    latitude,
+                                    longitude,
+                                    weatherHandler
+                            );
+
+                            thread.start();
+                        }
+                    },
+                    null
+            );
         }
     }
 
-    /**
-     * Καλείται κάθε φορά που ο αισθητήρας επιτάχυνσης δίνει νέα δεδομένα.
-     * Χρησιμοποιείται για να ανιχνεύσουμε αν ο χρήστης κούνησε έντονα τη συσκευή.
-     */
     @Override
     public void onSensorChanged(SensorEvent event){
         if (event.sensor == Acc) {
-            // Τιμές επιτάχυνσης στους τρεις άξονες της συσκευής
+            // movement is calculated with 3 ajones
             float x = event.values[0];
             float y = event.values[1];
             float z = event.values[2];
 
-            // Υπολογισμός συνολικής επιτάχυνσης από τους τρεις άξονες
+            // currentAcceleration is calculated with the Pythagoreum theorem?
             lastAcceleration = currentAcceleration;
             currentAcceleration = (float) Math.sqrt((double) (x * x + y * y + z * z));
 
-            // Διαφορά τρέχουσας και προηγούμενης επιτάχυνσης
+            // subtracting the lastAcceleration from the current one to see the difference
             float delta = currentAcceleration - lastAcceleration;
-
-            // Φίλτρο για μείωση θορύβου του αισθητήρα
+            
+            // calculates the sensors noise
             acceleration = acceleration * 0.9f + delta;
 
             // Αν η επιτάχυνση είναι πάνω από 12, πάει να πει ότι το κινητό ΚΟΥΝΗΘΗΚΕ ΔΥΝΑΤΑ
@@ -226,10 +247,6 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         }
     }
 
-    /**
-     * Μέθοδος του SensorEventListener.
-     * Δεν χρησιμοποιείται στην εφαρμογή, αλλά πρέπει να υπάρχει λόγω του interface.
-     */
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy){
 

@@ -181,5 +181,31 @@
         android:textSize="20sp"
         />
 
+    <TextView
+        android:id="@+id/currentLocationText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/searchWeatherButton"
+        android:layout_centerHorizontal="true"
+        android:fontFamily="@font/afacad_medium"
+        android:text="MyLocation weather:"
+        android:textSize="28sp"
+        android:textColor="@color/white"
+        android:layout_marginTop="20dp"
+        />
+
+    <Button
+        android:id="@+id/currentLocationButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/currentLocationText"
+        android:fontFamily="@font/afacad_medium"
+        android:text="Current Location"
+        android:textColor="@color/white"
+        android:textSize="25sp"
+        android:layout_marginTop="10dp"
+        android:padding="12dp"
+        />
+
 
 </RelativeLayout>
