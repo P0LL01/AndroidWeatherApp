@@ -42,7 +42,7 @@ import android.os.Message;
 
 public class MainActivity extends AppCompatActivity  implements View.OnClickListener, SensorEventListener {
     // UI variables
-    private TextView cityNameText, temperatureText, humidityText, windText;
+    private TextView cityNameText, temperatureText, humidityText, windText, descriptionWeatherText;
     private ImageView weatherImage;
     private Button refreshButton, currentLocationButton;
     private EditText cityNameInput;
@@ -70,6 +70,50 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                 int humidity = bundle.getInt("humidity");
                 double windSpeed = bundle.getDouble("windSpeed");
                 String areaName = bundle.getString("areaName");
+                // reads the weatherCode, sets -1 as default for debugging later
+                int weatherCode = bundle.getInt("weatherCode", -1);
+
+                // this switch statement receives the weatherCode from the API and returns the
+                // proper weatherImage and viewText to the screen.
+                switch (weatherCode) {
+                    case 0: // Sunny weather
+                        weatherImage.setImageResource(R.drawable.sunny5);
+                        descriptionWeatherText.setText("Sunny");
+                        break;
+
+                    case 1:
+                    case 2:
+                    case 3: // Cloudy weather
+                        weatherImage.setImageResource(R.drawable.clouds);
+                        descriptionWeatherText.setText("Cloudy");
+                        break;
+
+                    case 61:
+                    case 63:
+                    case 65: // Rainy weather
+                        weatherImage.setImageResource(R.drawable.rain);
+                        descriptionWeatherText.setText("Rainy");
+                        break;
+
+                    case 71:
+                    case 73:
+                    case 75: // Snowy eather
+                        weatherImage.setImageResource(R.drawable.snow);
+                        descriptionWeatherText.setText("Snowy");
+                        break;
+
+                    case 95:
+                    case 96:
+                    case 99: // Thunderstorm / Heavy rain
+                        weatherImage.setImageResource(R.drawable.thunderstorm);
+                        descriptionWeatherText.setText("Stormy");
+                        break;
+
+                    default:
+                        // if the code return anything else then the program breaks.
+                        descriptionWeatherText.setText("ERROR_CODE:Weather Unavailable.");
+                        break;
+                }
 
                 cityNameText.setText(areaName);
                 SharedPreferences prefs = getSharedPreferences("WeatherPrefs", MODE_PRIVATE);
@@ -125,6 +169,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         cityNameInput = findViewById(R.id.cityNameInput);
         refreshButton = findViewById(R.id.searchWeatherButton);
         currentLocationButton = findViewById(R.id.currentLocationButton);
+        descriptionWeatherText = findViewById(R.id.descriptionWeatherText);
 
 
 
