@@ -45,7 +45,6 @@ public class WeatherThread extends Thread {
                             "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code" +
                             "&forecast_days=1";
 
-            System.out.println(urlText);
 
             // Δημιουργία σύνδεσης HTTP με τον server
             URL url = new URL(urlText);
@@ -72,8 +71,6 @@ public class WeatherThread extends Thread {
             reader.close();
             connection.disconnect();
 
-            System.out.println(result.toString());
-
             // Μετατροπή του JSON σε αντικείμενο JSONObject
             JSONObject root = new JSONObject(result.toString());
 
@@ -91,8 +88,7 @@ public class WeatherThread extends Thread {
                     areaName,
                     temperature,
                     humidity,
-                    windSpeed,
-                    0
+                    windSpeed
             );
 
             // Δημιουργία Message που θα σταλεί στο MainActivity

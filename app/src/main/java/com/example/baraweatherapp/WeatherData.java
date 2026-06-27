@@ -13,7 +13,6 @@ public class WeatherData {
     public double temperature; // Τρέχουσα θερμοκρασία σε βαθμούς Κελσίου
     public int humidity; // Τρέχουσα σχετική υγρασία (%)
     public double windSpeed; // Ταχύτητα ανέμου (km/h)
-    public int rainProbability; // Πιθανότητα βροχής (%)
     public String alertMessage; // Μήνυμα προειδοποίησης που εμφανίζεται στον χρήστη
 
     /**
@@ -21,12 +20,11 @@ public class WeatherData {
      * Αρχικοποιεί όλες τις τιμές που επιστρέφει το API
      * και δημιουργεί το κατάλληλο μήνυμα προειδοποίησης.
      */
-    public WeatherData(String areaName, double temperature, int humidity, double windSpeed, int rainProbability) {
+    public WeatherData(String areaName, double temperature, int humidity, double windSpeed) {
         this.areaName = areaName;
         this.temperature = temperature;
         this.humidity = humidity;
         this.windSpeed = windSpeed;
-        this.rainProbability = rainProbability;
         // Δημιουργία του κατάλληλου μηνύματος προειδοποίησης
         calculateAlertMessage();
     }
@@ -38,7 +36,7 @@ public class WeatherData {
      * ισχυρός άνεμος ή μεγάλη πιθανότητα βροχής.
      */
     public boolean hasDangerousWeather() {
-        return temperature >= 38 || windSpeed >= 60 || rainProbability >= 80;
+        return temperature >= 38 || windSpeed >= 60;
     }
 
     /**
@@ -50,8 +48,6 @@ public class WeatherData {
             alertMessage = "Προειδοποίηση για υψηλές θερμοκρασίες";
         } else if (windSpeed >= 60) {
             alertMessage = "Προειδοποίηση για ισχυρούς ανέμους";
-        } else if (rainProbability >= 80) {
-            alertMessage = "Προειδοποίηση για έντονες βροχοπτώσεις";
         } else {
             alertMessage = "Κανονικές καιρικές συνθήκες";
         }
