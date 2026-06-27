@@ -22,6 +22,10 @@ public class WeatherThread extends Thread {
     private double longitude;
     private Handler handler;
 
+    /**
+     * Executes API network requests in a separate thread to prevent
+     * blocking the main UI thread (ANR - Application Not Responding).
+     */
     public WeatherThread(String areaName, double latitude, double longitude, Handler handler) {
         this.areaName = areaName;
         this.latitude = latitude;
@@ -29,15 +33,14 @@ public class WeatherThread extends Thread {
         this.handler = handler;
     }
 
-    /**
-     * Η run() εκτελείται αυτόματα όταν καλέσουμε thread.start().
-     * Εδώ γίνεται όλη η διαδικασία λήψης και επεξεργασίας των δεδομένων καιρού.
-     */
+
+    // run() function runs automatically when thread.start() is called
+    // all the weather data fetching and weather data process happens here
     @Override
     public void run() {
         try {
 
-            // Δημιουργία του URL για το Open-Meteo API
+            // Makes the URL for Open-Meteo API
             String urlText =
                     "https://api.open-meteo.com/v1/forecast" +
                             "?latitude=" + latitude +
@@ -47,7 +50,7 @@ public class WeatherThread extends Thread {
 
             System.out.println(urlText);
 
-            // Δημιουργία σύνδεσης HTTP με τον server
+            // establishes the HTTP connection with the server
             URL url = new URL(urlText);
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -55,7 +58,7 @@ public class WeatherThread extends Thread {
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(10000);
 
-            // Ανάγνωση της απάντησης του API
+            // reding of the API's answer
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(connection.getInputStream())
             );
@@ -63,30 +66,31 @@ public class WeatherThread extends Thread {
             StringBuilder result = new StringBuilder();
             String line;
 
-            // Διαβάζουμε το JSON γραμμή-γραμμή
+            // reading of the JSON file for each line
             while ((line = reader.readLine()) != null) {
                 result.append(line);
             }
 
-            // Κλείσιμο της σύνδεσης
+            // closes the connection
             reader.close();
             connection.disconnect();
 
             System.out.println(result.toString());
 
-            // Μετατροπή του JSON σε αντικείμενο JSONObject
+            // parse JSON response data
+            // converts the JSON to JSONObject
             JSONObject root = new JSONObject(result.toString());
 
-            // Ανάκτηση του αντικειμένου "current"
+            // retrieves the "current" object
             JSONObject current = root.getJSONObject("current");
 
-            // Εξαγωγή των τιμών που μας ενδιαφέρουν
+            // Extract relevant weather variables
             double temperature = current.getDouble("temperature_2m");
             int humidity = current.getInt("relative_humidity_2m");
             double windSpeed = current.getDouble("wind_speed_10m");
             int weatherCode = current.getInt("weather_code");
 
-            // Δημιουργία αντικειμένου WeatherData
+            // Create data model object WeatherData
             WeatherData weatherData = new WeatherData(
                     areaName,
                     temperature,
@@ -94,11 +98,11 @@ public class WeatherThread extends Thread {
                     windSpeed
             );
 
-            // Δημιουργία Message που θα σταλεί στο MainActivity
+            // Prepare message bundle to send back to the UI/Service handler (MainActivity)
             Message msg = new Message();
             msg.what = 1;
 
-            // Αποθήκευση των δεδομένων μέσα σε Bundle
+            // saves the data in the bundle
             Bundle bundle = new Bundle();
 
             bundle.putString("areaName", weatherData.areaName);
@@ -111,15 +115,15 @@ public class WeatherThread extends Thread {
 
             msg.setData(bundle);
 
-            // Αποστολή του Message στον Handler του MainActivity
+            // Dispatch message to handler (MainActivity)
             handler.sendMessage(msg);
 
         } catch (Exception e) {
-            // Εμφάνιση του σφάλματος για λόγους αποσφαλμάτωσης
+            // debug
             e.printStackTrace();
 
-            // Αν υπάρξει οποιοδήποτε πρόβλημα,
-            // ενημερώνεται το MainActivity με μήνυμα αποτυχίας
+            // debug
+            // if an error occurs, it informs MainActivity with an error status msg
             Message msg = new Message();
             msg.what = -1;
             handler.sendMessage(msg);

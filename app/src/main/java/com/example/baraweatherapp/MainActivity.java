@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
     private TextView settingsButton;
 
-
+    // Handles messages received from the background weather thread
     private Handler weatherHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -180,6 +180,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
+        // Requests notification permissions for newer Android versions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -198,8 +199,10 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
 
     // the onClick() function enables and controlls all the apps buttons.
+    // Handles button click actions
     @Override
     public void onClick(View v){
+        // Logic for city search using Geocoder
         if (v == refreshButton){
 
             // reads the users input in the citytoSearch bar
@@ -237,7 +240,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                     Toast.makeText(this, "Σφάλμα στην αναζήτηση περιοχής", Toast.LENGTH_SHORT).show();
                 }
             }
-        } else if (v == currentLocationButton) {
+        } else if (v == currentLocationButton) { // Logic for fetching GPS coordinates
 
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -280,7 +283,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                     },
                     null
             );
-        } else if (v == settingsButton) {
+        } else if (v == settingsButton) { // Navigation to Settings
             Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             startActivity(intent);
         }
