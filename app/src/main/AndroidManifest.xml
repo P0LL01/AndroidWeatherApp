@@ -16,6 +16,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BaraWeatherApp">
         <service android:name=".WeatherService" />
+        <activity android:name=".SettingsActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

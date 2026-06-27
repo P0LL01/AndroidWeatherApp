@@ -40,23 +40,15 @@ import androidx.core.app.ActivityCompat;
 import android.os.Handler;
 import android.os.Message;
 
-public class MainActivity extends AppCompatActivity  implements View.OnClickListener, SensorEventListener {
+public class MainActivity extends AppCompatActivity  implements View.OnClickListener{
     // UI variables
     private TextView cityNameText, temperatureText, humidityText, windText, descriptionWeatherText;
     private ImageView weatherImage;
     private Button refreshButton, currentLocationButton;
     private EditText cityNameInput;
-
-    // shake variables for SensorEventListener
-    private SensorManager SM;
-    private Sensor Acc;
-
-    // movement variables
-    private float acceleration;
-    private float currentAcceleration;
-    private float lastAcceleration;
-
     private LocationManager locationManager;
+
+    private TextView settingsButton;
 
 
     private Handler weatherHandler = new Handler(new Handler.Callback() {
@@ -77,7 +69,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                 // proper weatherImage and viewText to the screen.
                 switch (weatherCode) {
                     case 0: // Sunny weather
-                        weatherImage.setImageResource(R.drawable.sunny5);
+                        weatherImage.setImageResource(R.drawable.baseline_wb_sunny_24);
                         descriptionWeatherText.setText("Sunny");
                         break;
 
@@ -98,7 +90,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                     case 71:
                     case 73:
                     case 75: // Snowy eather
-                        weatherImage.setImageResource(R.drawable.snow);
+                        weatherImage.setImageResource(R.drawable.outline_ac_unit_24);
                         descriptionWeatherText.setText("Snowy");
                         break;
 
@@ -179,15 +171,6 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
         currentLocationButton.setOnClickListener(this);
 
-        // enabling the sensor and getting the values
-        SM = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        // get acceleration values from the accelerometer sensor
-        Acc = SM.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-        // gravity values for the moving sensors
-        acceleration = 0.00f;
-        currentAcceleration = SensorManager.GRAVITY_EARTH;
-        lastAcceleration = SensorManager.GRAVITY_EARTH;
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -208,27 +191,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                 );
             }
         }
-    }
 
-    // function for when the app is running on the background of the phone
-    @Override
-    protected void onPause(){
-        super.onPause();
-        // unregisters the listener when the app is onPause() to consume less batery
-        if (SM != null) {
-            SM.unregisterListener(this);
-        }
-    }
-
-    // function for when the user opens up the app again from the background
-    @Override
-    protected void onResume(){
-         super.onResume();
-        if (Acc != null) {
-            // sets the listener on onResume to listen for new data
-            // the sensor listens for the phones movement, later used in the current_location
-            SM.registerListener(this, Acc, SensorManager.SENSOR_DELAY_NORMAL);
-        }
+        settingsButton = findViewById(R.id.settingsButton);
+        settingsButton.setOnClickListener(this);
     }
 
 
@@ -315,39 +280,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                     },
                     null
             );
+        } else if (v == settingsButton) {
+            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent);
         }
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent event){
-        if (event.sensor == Acc) {
-            // movement is calculated with 3 ajones
-            float x = event.values[0];
-            float y = event.values[1];
-            float z = event.values[2];
-
-            // currentAcceleration is calculated with the Pythagoreum theorem?
-            lastAcceleration = currentAcceleration;
-            currentAcceleration = (float) Math.sqrt((double) (x * x + y * y + z * z));
-
-            // subtracting the lastAcceleration from the current one to see the difference
-            float delta = currentAcceleration - lastAcceleration;
-            
-            // calculates the sensors noise
-            acceleration = acceleration * 0.9f + delta;
-
-            // Αν η επιτάχυνση είναι πάνω από 12, πάει να πει ότι το κινητό ΚΟΥΝΗΘΗΚΕ ΔΥΝΑΤΑ
-            // (Το περπάτημα ή το απλό πιάσιμο δίνει μικρότερα νούμερα)
-            if (acceleration > 12) {
-                Toast.makeText(this, "Έγινε Shake! Ανανέωση...", Toast.LENGTH_SHORT).show();
-                // RECALLING API FOR REFRESH LATITUDE, AMPLITUDE (SYNTETAGMENES)
-            }
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy){
-
-
     }
 }
