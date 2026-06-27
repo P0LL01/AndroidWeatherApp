@@ -76,8 +76,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                 // this switch statement receives the weatherCode from the API and returns the
                 // proper weatherImage and viewText to the screen.
                 switch (weatherCode) {
+
                     case 0: // Sunny weather
-                        weatherImage.setImageResource(R.drawable.sunny5);
+                        weatherImage.setImageResource(R.drawable.baseline_wb_sunny_24);
                         descriptionWeatherText.setText("Sunny");
                         break;
 
@@ -88,6 +89,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                         descriptionWeatherText.setText("Cloudy");
                         break;
 
+                    case 55:
                     case 61:
                     case 63:
                     case 65: // Rainy weather
@@ -110,8 +112,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                         break;
 
                     default:
-                        // if the code return anything else then the program breaks.
-                        descriptionWeatherText.setText("ERROR_CODE:Weather Unavailable.");
+                        // Τυπώνουμε τον ακριβή αριθμό για να ξέρουμε τι φταίει!
+                        descriptionWeatherText.setText("Άγνωστος κωδικός: " + weatherCode);
+                        // weatherImage.setImageResource(R.drawable.mia_genikh_eikona); // Προαιρετικά
                         break;
                 }
 
