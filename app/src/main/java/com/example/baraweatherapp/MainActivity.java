@@ -6,7 +6,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.media.Image;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -26,6 +25,15 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.location.LocationListener;
+import android.content.Intent;
+
+import android.location.Address;
+import android.location.Geocoder;
+
+import java.util.List;
+import java.util.Locale;
+
+import android.os.Build;
 
 import androidx.core.app.ActivityCompat;
 
@@ -143,6 +151,18 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         });
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        200
+                );
+            }
+        }
     }
 
     // function for when the app is running on the background of the phone
@@ -176,34 +196,35 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             String cityToSearch = cityNameInput.getText().toString();
 
             // checks if the user input is empty or not
-            if(!cityToSearch.isEmpty()) {
-                if (!cityToSearch.isEmpty()) {
+            if (!cityToSearch.isEmpty()) {
+                try {
+                    Geocoder geocoder = new Geocoder(this, Locale.getDefault());
 
-                    double latitude = 37.9838;
-                    double longitude = 23.7275;
+                    List<Address> addresses =
+                            geocoder.getFromLocationName(cityToSearch, 1);
 
-                    if (cityToSearch.equalsIgnoreCase("Athens")) {
-                        latitude = 37.9838;
-                        longitude = 23.7275;
-                    } else if (cityToSearch.equalsIgnoreCase("Thessaloniki")) {
-                        latitude = 40.6401;
-                        longitude = 22.9444;
-                    } else if (cityToSearch.equalsIgnoreCase("Patras")) {
-                        latitude = 38.2466;
-                        longitude = 21.7346;
-                    } else if (cityToSearch.equalsIgnoreCase("Heraklion")) {
-                        latitude = 35.3387;
-                        longitude = 25.1442;
+                    if (addresses != null && addresses.size() > 0) {
+                        Address address = addresses.get(0);
+
+                        double latitude = address.getLatitude();
+                        double longitude = address.getLongitude();
+
+                        WeatherThread thread = new WeatherThread(
+                                cityToSearch,
+                                latitude,
+                                longitude,
+                                weatherHandler
+                        );
+
+                        thread.start();
+
+                    } else {
+                        Toast.makeText(this, "Δεν βρέθηκε η περιοχή", Toast.LENGTH_SHORT).show();
                     }
 
-                    WeatherThread thread = new WeatherThread(
-                            cityToSearch,
-                            latitude,
-                            longitude,
-                            weatherHandler
-                    );
-
-                    thread.start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "Σφάλμα στην αναζήτηση περιοχής", Toast.LENGTH_SHORT).show();
                 }
             }
         } else if (v == currentLocationButton) {
@@ -217,6 +238,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                         100
                 );
 
+
                 return;
             }
 
@@ -228,12 +250,20 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
 
+                            Intent serviceIntent = new Intent(MainActivity.this, WeatherService.class);
+                            serviceIntent.putExtra("areaName", "Current Location");
+                            serviceIntent.putExtra("latitude", latitude);
+                            serviceIntent.putExtra("longitude", longitude);
+                            startService(serviceIntent);
+
                             WeatherThread thread = new WeatherThread(
                                     "Current Location",
                                     latitude,
                                     longitude,
                                     weatherHandler
                             );
+
+
 
                             thread.start();
                         }
