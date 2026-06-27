@@ -2,6 +2,10 @@ package com.example.baraweatherapp;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -36,12 +40,21 @@ import androidx.core.app.ActivityCompat;
 import android.os.Handler;
 import android.os.Message;
 
-public class MainActivity extends AppCompatActivity  implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity  implements View.OnClickListener, SensorEventListener {
     // UI variables
     private TextView cityNameText, temperatureText, humidityText, windText, descriptionWeatherText;
     private ImageView weatherImage;
     private Button refreshButton, currentLocationButton;
     private EditText cityNameInput;
+
+    // shake variables for SensorEventListener
+    private SensorManager SM;
+    private Sensor Acc;
+
+    // movement variables
+    private float acceleration;
+    private float currentAcceleration;
+    private float lastAcceleration;
 
     private LocationManager locationManager;
 
@@ -63,9 +76,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                 // this switch statement receives the weatherCode from the API and returns the
                 // proper weatherImage and viewText to the screen.
                 switch (weatherCode) {
-
                     case 0: // Sunny weather
-                        weatherImage.setImageResource(R.drawable.baseline_wb_sunny_24);
+                        weatherImage.setImageResource(R.drawable.sunny5);
                         descriptionWeatherText.setText("Sunny");
                         break;
 
@@ -76,7 +88,6 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                         descriptionWeatherText.setText("Cloudy");
                         break;
 
-                    case 55:
                     case 61:
                     case 63:
                     case 65: // Rainy weather
@@ -99,9 +110,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                         break;
 
                     default:
-                        // Τυπώνουμε τον ακριβή αριθμό για να ξέρουμε τι φταίει!
-                        descriptionWeatherText.setText("Άγνωστος κωδικός: " + weatherCode);
-                        // weatherImage.setImageResource(R.drawable.mia_genikh_eikona); // Προαιρετικά
+                        // if the code return anything else then the program breaks.
+                        descriptionWeatherText.setText("ERROR_CODE:Weather Unavailable.");
                         break;
                 }
 
@@ -162,11 +172,22 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         descriptionWeatherText = findViewById(R.id.descriptionWeatherText);
 
 
+
         // this button is used for the application to hear the clicks taht the user makes
         // moves straight to the onClick() function
         refreshButton.setOnClickListener(this);
 
         currentLocationButton.setOnClickListener(this);
+
+        // enabling the sensor and getting the values
+        SM = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        // get acceleration values from the accelerometer sensor
+        Acc = SM.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+        // gravity values for the moving sensors
+        acceleration = 0.00f;
+        currentAcceleration = SensorManager.GRAVITY_EARTH;
+        lastAcceleration = SensorManager.GRAVITY_EARTH;
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -189,11 +210,32 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         }
     }
 
+    // function for when the app is running on the background of the phone
+    @Override
+    protected void onPause(){
+        super.onPause();
+        // unregisters the listener when the app is onPause() to consume less batery
+        if (SM != null) {
+            SM.unregisterListener(this);
+        }
+    }
+
+    // function for when the user opens up the app again from the background
+    @Override
+    protected void onResume(){
+         super.onResume();
+        if (Acc != null) {
+            // sets the listener on onResume to listen for new data
+            // the sensor listens for the phones movement, later used in the current_location
+            SM.registerListener(this, Acc, SensorManager.SENSOR_DELAY_NORMAL);
+        }
+    }
+
 
     // the onClick() function enables and controlls all the apps buttons.
     @Override
-    public void onClick(View v) {
-        if (v == refreshButton) {
+    public void onClick(View v){
+        if (v == refreshButton){
 
             // reads the users input in the citytoSearch bar
             String cityToSearch = cityNameInput.getText().toString();
@@ -267,11 +309,45 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                             );
 
 
+
                             thread.start();
                         }
                     },
                     null
             );
         }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event){
+        if (event.sensor == Acc) {
+            // movement is calculated with 3 ajones
+            float x = event.values[0];
+            float y = event.values[1];
+            float z = event.values[2];
+
+            // currentAcceleration is calculated with the Pythagoreum theorem?
+            lastAcceleration = currentAcceleration;
+            currentAcceleration = (float) Math.sqrt((double) (x * x + y * y + z * z));
+
+            // subtracting the lastAcceleration from the current one to see the difference
+            float delta = currentAcceleration - lastAcceleration;
+            
+            // calculates the sensors noise
+            acceleration = acceleration * 0.9f + delta;
+
+            // Αν η επιτάχυνση είναι πάνω από 12, πάει να πει ότι το κινητό ΚΟΥΝΗΘΗΚΕ ΔΥΝΑΤΑ
+            // (Το περπάτημα ή το απλό πιάσιμο δίνει μικρότερα νούμερα)
+            if (acceleration > 12) {
+                Toast.makeText(this, "Έγινε Shake! Ανανέωση...", Toast.LENGTH_SHORT).show();
+                // RECALLING API FOR REFRESH LATITUDE, AMPLITUDE (SYNTETAGMENES)
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy){
+
+
     }
 }

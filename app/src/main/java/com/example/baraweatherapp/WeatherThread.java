@@ -42,9 +42,10 @@ public class WeatherThread extends Thread {
                     "https://api.open-meteo.com/v1/forecast" +
                             "?latitude=" + latitude +
                             "&longitude=" + longitude +
-                            "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code" +
+                            "&current=temperature_2m,relative_humidity_2m,wind_speed_10m" +
                             "&forecast_days=1";
 
+            System.out.println(urlText);
 
             // Δημιουργία σύνδεσης HTTP με τον server
             URL url = new URL(urlText);
@@ -71,6 +72,8 @@ public class WeatherThread extends Thread {
             reader.close();
             connection.disconnect();
 
+            System.out.println(result.toString());
+
             // Μετατροπή του JSON σε αντικείμενο JSONObject
             JSONObject root = new JSONObject(result.toString());
 
@@ -81,14 +84,14 @@ public class WeatherThread extends Thread {
             double temperature = current.getDouble("temperature_2m");
             int humidity = current.getInt("relative_humidity_2m");
             double windSpeed = current.getDouble("wind_speed_10m");
-            int weatherCode = current.getInt("weather_code");
 
             // Δημιουργία αντικειμένου WeatherData
             WeatherData weatherData = new WeatherData(
                     areaName,
                     temperature,
                     humidity,
-                    windSpeed
+                    windSpeed,
+                    0
             );
 
             // Δημιουργία Message που θα σταλεί στο MainActivity
@@ -102,7 +105,6 @@ public class WeatherThread extends Thread {
             bundle.putDouble("temperature", weatherData.temperature);
             bundle.putInt("humidity", weatherData.humidity);
             bundle.putDouble("windSpeed", weatherData.windSpeed);
-            bundle.putInt("weatherCode", weatherCode);
             bundle.putString("alertMessage", weatherData.alertMessage);
             bundle.putBoolean("danger", weatherData.hasDangerousWeather());
 
