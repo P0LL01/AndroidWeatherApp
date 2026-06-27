@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     // UI variables
     private TextView cityNameText, temperatureText, humidityText, windText, descriptionWeatherText;
     private ImageView weatherImage;
-    private Button refreshButton, currentLocationButton;
+    private Button refreshButton, currentLocationButton, settingsButton;
     private EditText cityNameInput;
 
     // shake variables for SensorEventListener
@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                 // proper weatherImage and viewText to the screen.
                 switch (weatherCode) {
                     case 0: // Sunny weather
-                        weatherImage.setImageResource(R.drawable.sunny5);
+                        weatherImage.setImageResource(R.drawable.sunny);
                         descriptionWeatherText.setText("Sunny");
                         break;
 
@@ -98,14 +98,14 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                     case 71:
                     case 73:
                     case 75: // Snowy eather
-                        weatherImage.setImageResource(R.drawable.snow);
+                        weatherImage.setImageResource(R.drawable.outline_ac_unit_24);
                         descriptionWeatherText.setText("Snowy");
                         break;
 
                     case 95:
                     case 96:
                     case 99: // Thunderstorm / Heavy rain
-                        weatherImage.setImageResource(R.drawable.thunderstorm);
+                        weatherImage.setImageResource(R.drawable.storm3);
                         descriptionWeatherText.setText("Stormy");
                         break;
 
@@ -170,6 +170,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         refreshButton = findViewById(R.id.searchWeatherButton);
         currentLocationButton = findViewById(R.id.currentLocationButton);
         descriptionWeatherText = findViewById(R.id.descriptionWeatherText);
+        settingsButton = findViewById(R.id.settingsButton);
 
 
 
@@ -177,7 +178,11 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         // moves straight to the onClick() function
         refreshButton.setOnClickListener(this);
 
+        // listener for current location button
         currentLocationButton.setOnClickListener(this);
+
+        // listener for settings button
+        settingsButton.setOnClickListener(this);
 
         // enabling the sensor and getting the values
         SM = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -315,7 +320,13 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                     },
                     null
             );
-        }
+        } else if (v == settingsButton) {
+        // Δημιουργούμε το Intent (τη διαδρομή) από την τρέχουσα οθόνη (MainActivity) προς τις Ρυθμίσεις
+        Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+
+        // Δίνουμε εντολή στο Android να ανοίξει τη νέα οθόνη
+        startActivity(intent);
+    }
     }
 
     @Override

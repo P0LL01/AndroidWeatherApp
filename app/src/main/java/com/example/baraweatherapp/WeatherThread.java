@@ -109,7 +109,7 @@ public class WeatherThread extends Thread {
             bundle.putDouble("temperature", weatherData.temperature);
             bundle.putInt("humidity", weatherData.humidity);
             bundle.putDouble("windSpeed", weatherData.windSpeed);
-            // weathercode bundle 
+            // weathercode bundle
             bundle.putInt("weatherCode", weatherCode);
             bundle.putString("alertMessage", weatherData.alertMessage);
             bundle.putBoolean("danger", weatherData.hasDangerousWeather());
