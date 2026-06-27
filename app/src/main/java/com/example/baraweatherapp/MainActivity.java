@@ -1,6 +1,7 @@
 package com.example.baraweatherapp;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -63,9 +64,31 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                 String areaName = bundle.getString("areaName");
 
                 cityNameText.setText(areaName);
-                temperatureText.setText(temperature + "°C");
+                SharedPreferences prefs = getSharedPreferences("WeatherPrefs", MODE_PRIVATE);
+
+                // sets Celsius/KMH to default measure if the user does not specify preference
+                boolean isCelsius = prefs.getBoolean("USE_CELSIUS", true);
+                boolean isKmH = prefs.getBoolean("USE_KMH", true);
+
+                if (!isCelsius) {
+                    // converts to Fahrenheit
+                    double fahrenheit = (temperature * 1.8) + 32;
+                    temperatureText.setText(String.format("%.1f°F", fahrenheit));
+                } else {
+                    // uses the API data (already selected Celsius)
+                    temperatureText.setText(temperature + "°C");
+                }
                 humidityText.setText(humidity + "%");
-                windText.setText(windSpeed + " km/h");
+
+                //
+                if (isKmH) {
+                    // uses the API data (already selected KMH)
+                    windText.setText(String.format("%.1f km/h", windSpeed));
+                } else {
+                    // converts the data to MPH
+                    double mph = windSpeed * 0.621371;
+                    windText.setText(String.format("%.1f Mph", mph));
+                }
 
             } else {
                 Toast.makeText(MainActivity.this, "Weather error", Toast.LENGTH_SHORT).show();

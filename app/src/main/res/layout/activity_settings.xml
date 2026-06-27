@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ρυθμίσεις Εφαρμογής"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="30dp"/>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/tempSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Χρήση βαθμών Κελσίου (°C)"
+        android:textSize="18sp"
+        android:padding="10dp"/>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/windSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Εμφάνιση ανέμου σε Km/h"
+        android:textSize="18sp"
+        android:padding="10dp"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#CCCCCC"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/windSwitch"
+        android:text="WeatherUp v1.2.0\nΔημιουργήθηκε για εργασία εξαμήνου στο μάθημα -Τεχνολογία και Προγραμματισμός Κινητών Συσκευών- από τους 4ετής φοιτητές: \n Ρόι Μάρα και Φοίβο Τσούχλη."
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:layout_marginTop="80dp"
+        android:textSize="14sp"
+        android:textColor="#888888"/>
+
+</LinearLayout>
