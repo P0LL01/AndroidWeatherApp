@@ -42,7 +42,7 @@ public class WeatherThread extends Thread {
                     "https://api.open-meteo.com/v1/forecast" +
                             "?latitude=" + latitude +
                             "&longitude=" + longitude +
-                            "&current=temperature_2m,relative_humidity_2m,wind_speed_10m" +
+                            "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code" +
                             "&forecast_days=1";
 
             System.out.println(urlText);
@@ -85,6 +85,10 @@ public class WeatherThread extends Thread {
             int humidity = current.getInt("relative_humidity_2m");
             double windSpeed = current.getDouble("wind_speed_10m");
 
+            // reads weather code for switch statement in MainActivity.java
+            int weatherCode = current.getInt("weather_code");
+
+
             // Δημιουργία αντικειμένου WeatherData
             WeatherData weatherData = new WeatherData(
                     areaName,
@@ -105,6 +109,8 @@ public class WeatherThread extends Thread {
             bundle.putDouble("temperature", weatherData.temperature);
             bundle.putInt("humidity", weatherData.humidity);
             bundle.putDouble("windSpeed", weatherData.windSpeed);
+            // weathercode bundle 
+            bundle.putInt("weatherCode", weatherCode);
             bundle.putString("alertMessage", weatherData.alertMessage);
             bundle.putBoolean("danger", weatherData.hasDangerousWeather());
 
